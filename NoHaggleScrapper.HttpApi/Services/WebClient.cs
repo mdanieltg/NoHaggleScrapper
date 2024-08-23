@@ -22,6 +22,7 @@ public class WebClient
         //   the BaseAddress property won't be null here because we're forcing it
         //   in the constructor
         Uri callingUri = uri ?? BaseUrl;
+        if (uri is null) uri = new Uri("/", UriKind.Relative);
         WebResult result = new() { Uri = callingUri, BaseUrl = BaseUrl };
         try
         {

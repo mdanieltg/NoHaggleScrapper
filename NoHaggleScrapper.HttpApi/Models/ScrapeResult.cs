@@ -7,8 +7,6 @@ public class ScrapeResult
 {
     public required Uri BaseUrl { get; init; }
     public required Uri Uri { get; init; }
-    public string? Html { get; set; }
-    public List<string> Keywords { get; set; }
-    public HashSet<AnchorTag> AnchorTags { get; set; }
-    public List<string> PhoneNumbers { get; set; }
+    public required HashSet<string> Keywords { get; set; }
+    public required HashSet<string> PhoneNumbers { get; set; }
 }

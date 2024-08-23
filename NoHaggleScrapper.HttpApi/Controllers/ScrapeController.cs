@@ -20,14 +20,12 @@ public class ScrapeController : ControllerBase
 
     [HttpGet("scrape")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<ActionResult<DigResult>> Scrape()
+    public async Task<ActionResult<IEnumerable<ScrapeResult>>> Scrape()
     {
         IEnumerable<Uri> urls = new List<Uri>()
         {
-            new("https://www.google.com", UriKind.Absolute),
-            new("https://www.github.com", UriKind.Absolute),
-            new("https://www.linkedin.com", UriKind.Absolute),
-            new("https://www.microsoft.com", UriKind.Absolute),
+            // new("https://www.cars.com/", UriKind.Absolute),
+            new("https://google.com/", UriKind.Absolute)
         };
 
         IReadOnlySet<string> keywords = new HashSet<string>()
@@ -38,13 +36,13 @@ public class ScrapeController : ControllerBase
 
         IReadOnlySet<string> extensionsToIgnore = new HashSet<string>()
         {
-            "jpg",
-            "jpeg",
-            "png",
-            "webp",
-            "gif",
-            "txt",
-            "tiff",
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".webp",
+            ".gif",
+            ".txt",
+            ".tiff",
         };
 
         IReadOnlySet<string> wordsToIgnore = new HashSet<string>()
@@ -55,7 +53,8 @@ public class ScrapeController : ControllerBase
             "google.com",
         };
 
-        await _scrapper.ScrapeAsync(urls, keywords, extensionsToIgnore, wordsToIgnore);
-        return Ok();
+        IEnumerable<ScrapeResult> scrapeResults = await _scrapper.ScrapeAsync(urls, keywords, extensionsToIgnore,
+            wordsToIgnore);
+        return Ok(scrapeResults);
     }
 }

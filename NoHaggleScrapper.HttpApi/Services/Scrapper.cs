@@ -9,8 +9,9 @@ public class Scrapper(ILogger<Scrapper> logger, Crawler crawler)
 {
     private static readonly Regex PhoneNumbers = new(@"\(?\d{3}\)?[- \.]\d{3}[- \.]\d{4}", RegexOptions.Compiled);
     private static readonly Regex Protocols = new(@"^[\w-]+:\/\/", RegexOptions.Multiline & RegexOptions.Compiled);
+    private readonly List<ScrapeResult> _scrapeResults = new();
 
-    public async Task ScrapeAsync(IEnumerable<Uri> websites, IReadOnlySet<string> keywords,
+    public async Task<List<ScrapeResult>> ScrapeAsync(IEnumerable<Uri> websites, IReadOnlySet<string> keywords,
         IReadOnlySet<string> extensionsToIgnore, IReadOnlySet<string> wordsToIgnore)
     {
         logger.LogDebug("Starting initial crawling operation");
@@ -28,6 +29,18 @@ public class Scrapper(ILogger<Scrapper> logger, Crawler crawler)
         foreach (WebResult webResult in webResults)
         {
             if (webResult.Html is null) continue;
+
+            HashSet<string> scrapedKeywords = ScrapeKeywords(webResult.Html, keywords);
+
+            if (scrapedKeywords.Count > 0)
+                _scrapeResults.Add(new ScrapeResult
+                {
+                    Uri = webResult.Uri,
+                    BaseUrl = webResult.BaseUrl,
+                    Keywords = scrapedKeywords,
+                    PhoneNumbers = ScrapePhoneNumbers(webResult.Html)
+                });
+
             anchorSet.AddRange(
                 ScrapeAnchorTags(webResult.Html, extensionsToIgnore, wordsToIgnore, webResult.BaseUrl)
             );
@@ -38,16 +51,18 @@ public class Scrapper(ILogger<Scrapper> logger, Crawler crawler)
         logger.LogDebug("Starting sub-scraping ");
 
         // Massive sub-scraping operation
-        List<ScrapeResult> scrapeResult = await SubScrapeAsync(anchorSet, extensionsToIgnore, wordsToIgnore);
+        await SubScrapeAsync(anchorSet, keywords, extensionsToIgnore, wordsToIgnore);
 
         stopwatch.Stop();
         logger.LogDebug("Finished sub-scraping operation in {Milliseconds} milliseconds", stopwatch.Elapsed);
         logger.LogDebug("Whole scraping operation took {Milliseconds:N0} milliseconds to complete",
             stopwatch.TotalElapsed);
+
+        return _scrapeResults;
     }
 
-    private async Task<List<ScrapeResult>> SubScrapeAsync(AnchorSet anchorSet, IReadOnlySet<string> extensionsToIgnore,
-        IReadOnlySet<string> wordsToIgnore)
+    private async Task SubScrapeAsync(AnchorSet anchorSet, IReadOnlySet<string> keywords,
+        IReadOnlySet<string> extensionsToIgnore, IReadOnlySet<string> wordsToIgnore)
     {
         List<AnchorHolder> remainingAnchors;
         do
@@ -66,25 +81,40 @@ public class Scrapper(ILogger<Scrapper> logger, Crawler crawler)
             foreach (WebResult webResult in webResults)
             {
                 if (webResult.Html is null) continue;
+
+                HashSet<string> scrapedKeywords = ScrapeKeywords(webResult.Html, keywords);
+
+                if (scrapedKeywords.Count > 0)
+                    _scrapeResults.Add(new ScrapeResult
+                    {
+                        Uri = webResult.Uri,
+                        BaseUrl = webResult.BaseUrl,
+                        Keywords = scrapedKeywords,
+                        PhoneNumbers = ScrapePhoneNumbers(webResult.Html)
+                    });
+
                 anchorSet.AddRange(
                     ScrapeAnchorTags(webResult.Html, extensionsToIgnore, wordsToIgnore, webResult.BaseUrl)
                 );
             }
         } while (true);
-
-        throw new NotImplementedException();
     }
 
-    private static List<string> ScrapeKeywords(string html)
+    private static HashSet<string> ScrapeKeywords(string html, IReadOnlySet<string> keywords)
     {
-        throw new NotImplementedException();
+        HashSet<string> foundKeywords = new();
+        foreach (string keyword in keywords)
+            if (html.Contains(keyword))
+                foundKeywords.Add(keyword);
+
+        return foundKeywords;
     }
 
-    private static List<string> ScrapePhoneNumbers(string html) =>
+    private static HashSet<string> ScrapePhoneNumbers(string html) =>
         PhoneNumbers.Matches(html)
             .Cast<Match>()
             .Select(match => match.Value)
-            .ToList();
+            .ToHashSet();
 
     private static List<AnchorHolder> ScrapeAnchorTags(string html, IReadOnlySet<string> extensionsToIgnore,
         IReadOnlySet<string> wordsToIgnore, Uri baseAddress)

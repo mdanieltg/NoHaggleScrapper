@@ -104,7 +104,7 @@ public class Scrapper(ILogger<Scrapper> logger, Crawler crawler)
                 if (scrapedKeywords.Count > 0)
                     _scrapeResults.Add(new ScrapeResult
                     {
-                        Url = webResult.Uri.ToString(),
+                        Url = webResult.FullUrl.ToString(),
                         Host = webResult.BaseUrl.Host,
                         Keywords = scrapedKeywords,
                         PhoneNumbers = ScrapePhoneNumbers(webResult.Html)

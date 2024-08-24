@@ -61,7 +61,7 @@ public class WebClient
             _logger.LogError("An HTTP {StatusCode} error occurred while processing the URL {Url}: {ErrorDescription}",
                 e.StatusCode, callingUri, e.Message);
 
-            if (e.StatusCode == HttpStatusCode.Forbidden && ++_forbiddenCount == 10)
+            if (e.StatusCode == HttpStatusCode.Forbidden && ++_forbiddenCount >= 10)
             {
                 _isBlocked = true;
                 _logger.LogWarning("The host {Host} is now blocking requests", BaseUrl.Host);

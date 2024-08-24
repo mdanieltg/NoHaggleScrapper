@@ -16,7 +16,7 @@ public class WebClient
 
     public Uri BaseUrl { get; }
 
-    public async Task<WebResult> GetHtml(Uri? uri)
+    public async Task<WebResult> GetHtml(Uri? uri, CancellationToken cancellationToken)
     {
         // Use the base address instead of the uri parameter for logging purposes
         //   the BaseAddress property won't be null here because we're forcing it
@@ -26,12 +26,12 @@ public class WebClient
         WebResult result = new() { Uri = callingUri, BaseUrl = BaseUrl };
         try
         {
-            HttpResponseMessage response = await _httpClient.GetAsync(uri);
+            HttpResponseMessage response = await _httpClient.GetAsync(uri, cancellationToken);
             _logger.LogDebug("Processing URL {Url}...", callingUri);
 
             response.EnsureSuccessStatusCode();
 
-            result.Html = await response.Content.ReadAsStringAsync();
+            result.Html = await response.Content.ReadAsStringAsync(cancellationToken);
             _logger.LogDebug("Successful response from URL {Url}", callingUri);
         }
         catch (HttpRequestException e)

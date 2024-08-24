@@ -6,7 +6,7 @@ public class Crawler(ILogger<Crawler> logger, ILogger<WebClient> webClientLogger
 {
     private IReadOnlyDictionary<string, WebClient>? _webClients;
 
-    public async Task<WebResult[]> CrawlAsync(IEnumerable<AnchorTag> anchorTags)
+    public async Task<WebResult[]> CrawlAsync(IEnumerable<AnchorTag> anchorTags, CancellationToken cancellationToken)
     {
         // Create the Tasks for running the scrapper for each "main" URL
         List<Task<WebResult>> webpageTasks = new();
@@ -19,7 +19,7 @@ public class Crawler(ILogger<Crawler> logger, ILogger<WebClient> webClientLogger
                 webClients.Add(anchorTag.Host, WebClient.CreateHttpClient(anchorTag.Url, webClientLogger));
 
             foreach (WebClient webClient in webClients.Values)
-                webpageTasks.Add(webClient.GetHtml(null));
+                webpageTasks.Add(webClient.GetHtml(null, cancellationToken));
 
             _webClients = webClients;
         }
@@ -31,7 +31,7 @@ public class Crawler(ILogger<Crawler> logger, ILogger<WebClient> webClientLogger
                 string urlHost = anchorTag.Host;
 
                 if (_webClients.TryGetValue(urlHost, out WebClient? webClient))
-                    webpageTasks.Add(webClient.GetHtml(anchorTag.Url));
+                    webpageTasks.Add(webClient.GetHtml(anchorTag.Url, cancellationToken));
                 else
                 {
                     logger.LogWarning("Couldn't find a strict WebClient for the URL {Url}, with host {Host}",
@@ -43,7 +43,7 @@ public class Crawler(ILogger<Crawler> logger, ILogger<WebClient> webClientLogger
                         .FirstOrDefault();
 
                     if (alternateClient is not null)
-                        webpageTasks.Add(alternateClient.GetHtml(anchorTag.Url));
+                        webpageTasks.Add(alternateClient.GetHtml(anchorTag.Url, cancellationToken));
                     else
                         logger.LogError("Couldn't find a WebClient for the URL {Url}, with host {Host}", anchorTag.Url,
                             urlHost);

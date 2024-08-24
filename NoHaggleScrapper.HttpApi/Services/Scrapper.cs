@@ -12,7 +12,8 @@ public class Scrapper(ILogger<Scrapper> logger, Crawler crawler)
     private readonly List<ScrapeResult> _scrapeResults = new();
 
     public async Task<List<ScrapeResult>> ScrapeAsync(IEnumerable<Uri> websites, IReadOnlySet<string> keywords,
-        IReadOnlySet<string> extensionsToIgnore, IReadOnlySet<string> wordsToIgnore)
+        IReadOnlySet<string> extensionsToIgnore, IReadOnlySet<string> wordsToIgnore,
+        CancellationToken cancellationToken)
     {
         IEnumerable<AnchorTag> anchors = websites.Select(uri => new AnchorTag(uri, uri));
 
@@ -20,7 +21,7 @@ public class Scrapper(ILogger<Scrapper> logger, Crawler crawler)
         var stopwatch = IntervalStopwatch.StartNew();
 
         // Crawl the initial "main" URLs
-        WebResult[] webResults = await crawler.CrawlAsync(anchors);
+        WebResult[] webResults = await crawler.CrawlAsync(anchors, cancellationToken);
 
         stopwatch.Interval();
         logger.LogDebug("Finished starting crawling operation in {Milliseconds} milliseconds", stopwatch.Elapsed);
@@ -53,7 +54,7 @@ public class Scrapper(ILogger<Scrapper> logger, Crawler crawler)
         logger.LogDebug("Starting sub-scraping ");
 
         // Massive sub-scraping operation
-        await SubScrapeAsync(anchorSet, keywords, extensionsToIgnore, wordsToIgnore);
+        await SubScrapeAsync(anchorSet, keywords, extensionsToIgnore, wordsToIgnore, cancellationToken);
 
         stopwatch.Stop();
         logger.LogDebug("Finished sub-scraping operation in {Milliseconds} milliseconds", stopwatch.Elapsed);
@@ -64,7 +65,8 @@ public class Scrapper(ILogger<Scrapper> logger, Crawler crawler)
     }
 
     private async Task SubScrapeAsync(AnchorSet anchorSet, IReadOnlySet<string> keywords,
-        IReadOnlySet<string> extensionsToIgnore, IReadOnlySet<string> wordsToIgnore)
+        IReadOnlySet<string> extensionsToIgnore, IReadOnlySet<string> wordsToIgnore,
+        CancellationToken cancellationToken)
     {
         do
         {
@@ -77,7 +79,8 @@ public class Scrapper(ILogger<Scrapper> logger, Crawler crawler)
             foreach (AnchorHolder anchorHolder in remainingAnchors)
                 anchorHolder.Visited = true;
 
-            WebResult[] webResults = await crawler.CrawlAsync(remainingAnchors.Select(holder => holder.AnchorTag));
+            WebResult[] webResults = await crawler.CrawlAsync(remainingAnchors.Select(holder => holder.AnchorTag),
+                cancellationToken);
 
             foreach (WebResult webResult in webResults)
             {

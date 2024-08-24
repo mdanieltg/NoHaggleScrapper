@@ -20,7 +20,7 @@ public class ScrapeController : ControllerBase
 
     [HttpGet("scrape")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<ScrapeResult>>> Scrape()
+    public async Task<ActionResult<IEnumerable<ScrapeResult>>> Scrape(CancellationToken cancellationToken)
     {
         IEnumerable<Uri> urls = new List<Uri>()
         {
@@ -54,7 +54,8 @@ public class ScrapeController : ControllerBase
         };
 
         IEnumerable<ScrapeResult> scrapeResults = await _scrapper.ScrapeAsync(urls, keywords, extensionsToIgnore,
-            wordsToIgnore);
+            wordsToIgnore, cancellationToken);
+        
         return Ok(scrapeResults);
     }
 }

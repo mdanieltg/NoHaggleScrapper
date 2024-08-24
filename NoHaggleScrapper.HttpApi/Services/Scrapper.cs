@@ -8,7 +8,7 @@ namespace NoHaggleScrapper.HttpApi.Services;
 public class Scrapper(ILogger<Scrapper> logger, Crawler crawler)
 {
     private static readonly Regex PhoneNumbers = new(@"\(?\d{3}\)?[- \.]\d{3}[- \.]\d{4}", RegexOptions.Compiled);
-    private static readonly Regex Protocols = new(@"^[\w-]+:\/\/", RegexOptions.Multiline & RegexOptions.Compiled);
+    private static readonly Regex Protocols = new(@"^[\w-]+:(\/\/)?", RegexOptions.Multiline | RegexOptions.Compiled);
     private readonly List<ScrapeResult> _scrapeResults = new();
 
     public async Task<List<ScrapeResult>> ScrapeAsync(IEnumerable<Uri> websites, IReadOnlySet<string> keywords,

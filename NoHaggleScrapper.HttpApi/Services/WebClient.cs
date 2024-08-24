@@ -48,7 +48,7 @@ public class WebClient
 
         try
         {
-            HttpResponseMessage response = await _httpClient.GetAsync(uri, cancellationToken);
+            using HttpResponseMessage response = await _httpClient.GetAsync(uri, cancellationToken);
             _logger.LogDebug("Processing URL {Url}...", callingUri);
 
             response.EnsureSuccessStatusCode();

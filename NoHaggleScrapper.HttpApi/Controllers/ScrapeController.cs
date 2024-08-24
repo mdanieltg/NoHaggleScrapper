@@ -11,17 +11,29 @@ public class ScrapeController : ControllerBase
 {
     private readonly ILogger<ScrapeController> _logger;
     private readonly Scrapper _scrapper;
+    private readonly CancellationTokenProvider _tokenProvider;
 
-    public ScrapeController(ILogger<ScrapeController> logger, Scrapper scrapper)
+    public ScrapeController(ILogger<ScrapeController> logger, Scrapper scrapper,
+        CancellationTokenProvider tokenProvider)
     {
         _logger = logger;
         _scrapper = scrapper;
+        _tokenProvider = tokenProvider;
     }
+
+    [HttpGet("cancel")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Cancel() =>
+        await _tokenProvider.CancelAsync()
+            ? NoContent()
+            : NotFound();
 
     [HttpGet("scrape")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<ScrapeResult>>> Scrape(CancellationToken cancellationToken)
+    public async Task<ActionResult<IEnumerable<ScrapeResult>>> Scrape()
     {
+        CancellationToken token = _tokenProvider.CreateToken();
         IEnumerable<Uri> urls = new List<Uri>()
         {
             new("https://www.cars.com/", UriKind.Absolute),
@@ -54,8 +66,10 @@ public class ScrapeController : ControllerBase
         };
 
         IEnumerable<ScrapeResult> scrapeResults = await _scrapper.ScrapeAsync(urls, keywords, extensionsToIgnore,
-            wordsToIgnore, cancellationToken);
-        
+            wordsToIgnore, token);
+
+        _tokenProvider.DisposeToken();
+
         return Ok(scrapeResults);
     }
 }

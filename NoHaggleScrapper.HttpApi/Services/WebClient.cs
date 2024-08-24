@@ -35,6 +35,8 @@ public class WebClient
 
     public async Task<WebResult> GetHtml(Uri? uri, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         // Use the base address instead of the uri parameter for logging purposes
         //   the BaseAddress property won't be null here because we're forcing it
         //   in the constructor
@@ -62,7 +64,7 @@ public class WebClient
             if (e.StatusCode == HttpStatusCode.Forbidden && ++_forbiddenCount == 10)
             {
                 _isBlocked = true;
-                _logger.LogWarning("The host {Host} is now blocking this WebClient requests", BaseUrl.Host);
+                _logger.LogWarning("The host {Host} is now blocking this WebClient's requests", BaseUrl.Host);
             }
         }
         catch (HttpRequestException e)

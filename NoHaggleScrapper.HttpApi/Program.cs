@@ -4,6 +4,7 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
+builder.Services.AddSingleton<CancellationTokenProvider>();
 builder.Services.AddScoped<Crawler>();
 builder.Services.AddScoped<Scrapper>();
 

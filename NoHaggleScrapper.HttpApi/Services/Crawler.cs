@@ -8,6 +8,8 @@ public class Crawler(ILogger<Crawler> logger, ILogger<WebClient> webClientLogger
 
     public async Task<WebResult[]> CrawlAsync(IEnumerable<AnchorTag> anchorTags, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         // Create the Tasks for running the scrapper for each "main" URL
         List<Task<WebResult>> webpageTasks = new();
 
@@ -27,7 +29,8 @@ public class Crawler(ILogger<Crawler> logger, ILogger<WebClient> webClientLogger
         {
             foreach (AnchorTag anchorTag in anchorTags)
             {
-                // InvalidOperationException because relative Uris cannot hold a Host part
+                cancellationToken.ThrowIfCancellationRequested();
+
                 string urlHost = anchorTag.Host;
 
                 if (_webClients.TryGetValue(urlHost, out WebClient? webClient))
@@ -51,6 +54,7 @@ public class Crawler(ILogger<Crawler> logger, ILogger<WebClient> webClientLogger
             }
         }
 
-        return await Task.WhenAll(webpageTasks);
+        return await Task.WhenAll(webpageTasks)
+            .WaitAsync(cancellationToken);
     }
 }

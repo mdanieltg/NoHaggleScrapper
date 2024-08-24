@@ -15,51 +15,60 @@ public class Scrapper(ILogger<Scrapper> logger, Crawler crawler)
         IReadOnlySet<string> extensionsToIgnore, IReadOnlySet<string> wordsToIgnore,
         CancellationToken cancellationToken)
     {
-        IEnumerable<AnchorTag> anchors = websites.Select(uri => new AnchorTag(uri, uri));
-
-        logger.LogDebug("Starting initial crawling operation");
-        var stopwatch = IntervalStopwatch.StartNew();
-
-        // Crawl the initial "main" URLs
-        WebResult[] webResults = await crawler.CrawlAsync(anchors, cancellationToken);
-
-        stopwatch.Interval();
-        logger.LogDebug("Finished starting crawling operation in {Milliseconds} milliseconds", stopwatch.Elapsed);
-        logger.LogDebug("Starting scraping operation");
-
-        // Scrape anchor tags from pages
-        AnchorSet anchorSet = new();
-        foreach (WebResult webResult in webResults)
+        try
         {
-            if (webResult.Html is null) continue;
+            IEnumerable<AnchorTag> anchors = websites.Select(uri => new AnchorTag(uri, uri));
 
-            HashSet<string> scrapedKeywords = ScrapeKeywords(webResult.Html, keywords);
+            logger.LogDebug("Starting initial crawling operation");
+            var stopwatch = IntervalStopwatch.StartNew();
 
-            if (scrapedKeywords.Count > 0)
-                _scrapeResults.Add(new ScrapeResult
-                {
-                    Url = webResult.Uri.ToString(),
-                    Host = webResult.BaseUrl.Host,
-                    Keywords = scrapedKeywords,
-                    PhoneNumbers = ScrapePhoneNumbers(webResult.Html)
-                });
+            // Crawl the initial "main" URLs
+            WebResult[] webResults = await crawler.CrawlAsync(anchors, cancellationToken);
 
-            anchorSet.AddRange(
-                ScrapeAnchorTags(webResult.Html, extensionsToIgnore, wordsToIgnore, webResult.BaseUrl)
-            );
+            stopwatch.Interval();
+            logger.LogDebug("Finished starting crawling operation in {Milliseconds:N0} milliseconds", stopwatch.Elapsed);
+            logger.LogDebug("Starting scraping operation");
+
+            // Scrape anchor tags from pages
+            AnchorSet anchorSet = new();
+            foreach (WebResult webResult in webResults)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (webResult.Html is null) continue;
+
+                HashSet<string> scrapedKeywords = ScrapeKeywords(webResult.Html, keywords);
+
+                if (scrapedKeywords.Count > 0)
+                    _scrapeResults.Add(new ScrapeResult
+                    {
+                        Url = new Uri(webResult.BaseUrl, webResult.Uri).ToString(),
+                        Host = webResult.BaseUrl.Host,
+                        Keywords = scrapedKeywords,
+                        PhoneNumbers = ScrapePhoneNumbers(webResult.Html)
+                    });
+
+                anchorSet.AddRange(
+                    ScrapeAnchorTags(webResult.Html, extensionsToIgnore, wordsToIgnore, webResult.BaseUrl)
+                );
+            }
+
+            stopwatch.Interval();
+            logger.LogDebug("Finished starting scraping operation in {Milliseconds:N0} milliseconds", stopwatch.Elapsed);
+            logger.LogDebug("Starting sub-scraping ");
+
+            // Massive sub-scraping operation
+            await SubScrapeAsync(anchorSet, keywords, extensionsToIgnore, wordsToIgnore, cancellationToken);
+
+            stopwatch.Stop();
+            logger.LogDebug("Finished sub-scraping operation in {Milliseconds:N0} milliseconds", stopwatch.Elapsed);
+            logger.LogDebug("Whole scraping operation took {Milliseconds:N0} milliseconds to complete",
+                stopwatch.TotalElapsed);
         }
-
-        stopwatch.Interval();
-        logger.LogDebug("Finished starting scraping operation in {Milliseconds} milliseconds", stopwatch.Elapsed);
-        logger.LogDebug("Starting sub-scraping ");
-
-        // Massive sub-scraping operation
-        await SubScrapeAsync(anchorSet, keywords, extensionsToIgnore, wordsToIgnore, cancellationToken);
-
-        stopwatch.Stop();
-        logger.LogDebug("Finished sub-scraping operation in {Milliseconds} milliseconds", stopwatch.Elapsed);
-        logger.LogDebug("Whole scraping operation took {Milliseconds:N0} milliseconds to complete",
-            stopwatch.TotalElapsed);
+        catch (OperationCanceledException)
+        {
+            logger.LogInformation("The operation was stopped due to a cancellation event");
+        }
 
         return _scrapeResults;
     }
@@ -70,6 +79,8 @@ public class Scrapper(ILogger<Scrapper> logger, Crawler crawler)
     {
         do
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             List<AnchorHolder> remainingAnchors = anchorSet
                 .Where(holder => !holder.Visited)
                 .ToList();
@@ -84,6 +95,8 @@ public class Scrapper(ILogger<Scrapper> logger, Crawler crawler)
 
             foreach (WebResult webResult in webResults)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 if (webResult.Html is null) continue;
 
                 HashSet<string> scrapedKeywords = ScrapeKeywords(webResult.Html, keywords);

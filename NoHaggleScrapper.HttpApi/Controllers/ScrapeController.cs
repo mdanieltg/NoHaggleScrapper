@@ -24,8 +24,8 @@ public class ScrapeController : ControllerBase
     {
         IEnumerable<Uri> urls = new List<Uri>()
         {
-            // new("https://www.cars.com/", UriKind.Absolute),
-            new("https://google.com/", UriKind.Absolute)
+            new("https://www.cars.com/", UriKind.Absolute),
+            new("https://www.edmunds.com/", UriKind.Absolute),
         };
 
         IReadOnlySet<string> keywords = new HashSet<string>()

@@ -16,8 +16,8 @@ public class WebClient
     private static readonly MediaTypeWithQualityHeaderValue AcceptEverything = new("*/*");
     private static readonly StringWithQualityHeaderValue AcceptEncodingGzip = new("gzip");
     private static readonly StringWithQualityHeaderValue AcceptEncodingDeflate = new("deflate");
-    private static readonly StringWithQualityHeaderValue AcceptLangEn = new("en-US", 0.9);
-    private static readonly StringWithQualityHeaderValue AcceptLangEnUs = new("en", 0.8);
+    private static readonly StringWithQualityHeaderValue AcceptLangEnUs = new("en-US", 0.9);
+    private static readonly StringWithQualityHeaderValue AcceptLangEn = new("en", 0.8);
 
     private readonly HttpClient _httpClient;
     private readonly ILogger<WebClient> _logger;

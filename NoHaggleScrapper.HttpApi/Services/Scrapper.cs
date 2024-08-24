@@ -153,18 +153,20 @@ public class Scrapper(ILogger<Scrapper> logger, Crawler crawler)
             // Protocols different than http and https
             if (Protocols.IsMatch(href) && !href.StartsWith("http")) continue;
 
-            // Points outside of the website
-            if (!IsLinkInternal(href, baseAddress.Host)) continue;
-
             // Contains any extension from the list
             if (extensionsToIgnore.Any(ignoredExtension => href.Contains(ignoredExtension))) continue;
 
             // Contains any ignored word from the list
             if (wordsToIgnore.Any(ignoredWord => href.Contains(ignoredWord))) continue;
 
+            Uri url = CreateUri(href);
+
+            // Points outside of the website
+            if (!IsUrlInternal(url, baseAddress)) continue;
+
             anchorHolders.Add(new AnchorHolder
             {
-                AnchorTag = new AnchorTag(baseAddress, CreateUri(href))
+                AnchorTag = new AnchorTag(baseAddress, url)
                 {
                     InnerText = anchor.InnerText,
                     Title = anchor.GetAttributeValue("title", null)
@@ -175,19 +177,7 @@ public class Scrapper(ILogger<Scrapper> logger, Crawler crawler)
         return anchorHolders;
     }
 
-    private static bool IsLinkInternal(string link, string baseAddress)
-    {
-        // Relative, always internal
-        if (link.StartsWith("/"))
-            return true;
-
-        // Absolute, validate Host
-        else if (link.StartsWith("http"))
-            return link.Contains(baseAddress) || baseAddress.Contains(link);
-
-        // Probably relative
-        return true;
-    }
+    private static bool IsUrlInternal(Uri url, Uri baseAddress) => !url.IsAbsoluteUri || baseAddress.IsBaseOf(url);
 
     private static Uri CreateUri(string link) =>
         link.StartsWith("http")

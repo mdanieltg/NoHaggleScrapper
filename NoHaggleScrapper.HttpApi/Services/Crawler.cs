@@ -37,19 +37,8 @@ public class Crawler(ILogger<Crawler> logger, ILogger<WebClient> webClientLogger
                     webpageTasks.Add(webClient.GetHtml(anchorTag.Url, cancellationToken));
                 else
                 {
-                    logger.LogWarning("Couldn't find a strict WebClient for the URL {Url}, with host {Host}",
-                        anchorTag.Url, urlHost);
-
-                    WebClient? alternateClient = _webClients
-                        .Where(pair => pair.Key.Contains(urlHost) || urlHost.Contains(pair.Key))
-                        .Select(pair => pair.Value)
-                        .FirstOrDefault();
-
-                    if (alternateClient is not null)
-                        webpageTasks.Add(alternateClient.GetHtml(anchorTag.Url, cancellationToken));
-                    else
-                        logger.LogError("Couldn't find a WebClient for the URL {Url}, with host {Host}", anchorTag.Url,
-                            urlHost);
+                    logger.LogError("Couldn't find a WebClient for the URL {Url}, with host {Host}", anchorTag.Url,
+                        urlHost);
                 }
             }
         }

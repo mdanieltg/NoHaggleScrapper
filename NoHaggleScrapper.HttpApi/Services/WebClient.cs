@@ -58,13 +58,13 @@ public class WebClient
         }
         catch (HttpRequestException e) when (e.StatusCode is not null)
         {
-            _logger.LogError("An HTTP {StatusCode} error occurred while processing the URL {Url} with description: {ErrorDescription}",
+            _logger.LogError("An HTTP {StatusCode} error occurred while processing the URL {Url}: {ErrorDescription}",
                 e.StatusCode, callingUri, e.Message);
 
             if (e.StatusCode == HttpStatusCode.Forbidden && ++_forbiddenCount == 10)
             {
                 _isBlocked = true;
-                _logger.LogWarning("The host {Host} is now blocking this WebClient's requests", BaseUrl.Host);
+                _logger.LogWarning("The host {Host} is now blocking requests", BaseUrl.Host);
             }
         }
         catch (HttpRequestException e)

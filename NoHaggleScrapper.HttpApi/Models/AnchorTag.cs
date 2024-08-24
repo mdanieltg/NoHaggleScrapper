@@ -2,14 +2,34 @@
 
 namespace NoHaggleScrapper.HttpApi.Models;
 
-[DebuggerDisplay("Uri: {Href}")]
+[DebuggerDisplay("Url: {FullUrl}")]
 public class AnchorTag
 {
-    public required string Href { get; set; }
-    public required Uri Website { get; set; }
+    public AnchorTag(Uri baseAddress, Uri url) : this(baseAddress, url, null)
+    {
+    }
+
+    public AnchorTag(Uri baseAddress, Uri url, string? innerText = null, string? title = null)
+    {
+        Url = url;
+        Website = baseAddress;
+        InnerText = innerText;
+        Title = title;
+
+        FullUrl = url is { IsAbsoluteUri: false }
+            ? new Uri(baseAddress, url)
+            : Url;
+
+        Host = FullUrl.Host;
+    }
+
+    public Uri Url { get; }
+    public Uri Website { get; }
+    public Uri FullUrl { get; }
+    public string Host { get; }
     public string? InnerText { get; set; }
     public string? Title { get; set; }
-    public required Uri Url { get; set; }
+    public string Href => FullUrl.ToString();
 
-    public override string ToString() => Href;
+    public override string ToString() => Url.ToString();
 }

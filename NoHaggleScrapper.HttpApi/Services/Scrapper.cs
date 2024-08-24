@@ -14,11 +14,13 @@ public class Scrapper(ILogger<Scrapper> logger, Crawler crawler)
     public async Task<List<ScrapeResult>> ScrapeAsync(IEnumerable<Uri> websites, IReadOnlySet<string> keywords,
         IReadOnlySet<string> extensionsToIgnore, IReadOnlySet<string> wordsToIgnore)
     {
+        IEnumerable<AnchorTag> anchors = websites.Select(uri => new AnchorTag(uri, uri));
+
         logger.LogDebug("Starting initial crawling operation");
         var stopwatch = IntervalStopwatch.StartNew();
 
         // Crawl the initial "main" URLs
-        WebResult[] webResults = await crawler.CrawlAsync(websites);
+        WebResult[] webResults = await crawler.CrawlAsync(anchors);
 
         stopwatch.Interval();
         logger.LogDebug("Finished starting crawling operation in {Milliseconds} milliseconds", stopwatch.Elapsed);
@@ -35,8 +37,8 @@ public class Scrapper(ILogger<Scrapper> logger, Crawler crawler)
             if (scrapedKeywords.Count > 0)
                 _scrapeResults.Add(new ScrapeResult
                 {
-                    Uri = webResult.Uri,
-                    BaseUrl = webResult.BaseUrl,
+                    Url = webResult.Uri.ToString(),
+                    Host = webResult.BaseUrl.Host,
                     Keywords = scrapedKeywords,
                     PhoneNumbers = ScrapePhoneNumbers(webResult.Html)
                 });
@@ -64,10 +66,9 @@ public class Scrapper(ILogger<Scrapper> logger, Crawler crawler)
     private async Task SubScrapeAsync(AnchorSet anchorSet, IReadOnlySet<string> keywords,
         IReadOnlySet<string> extensionsToIgnore, IReadOnlySet<string> wordsToIgnore)
     {
-        List<AnchorHolder> remainingAnchors;
         do
         {
-            remainingAnchors = anchorSet
+            List<AnchorHolder> remainingAnchors = anchorSet
                 .Where(holder => !holder.Visited)
                 .ToList();
 
@@ -76,7 +77,7 @@ public class Scrapper(ILogger<Scrapper> logger, Crawler crawler)
             foreach (AnchorHolder anchorHolder in remainingAnchors)
                 anchorHolder.Visited = true;
 
-            WebResult[] webResults = await crawler.CrawlAsync(remainingAnchors.Select(holder => holder.AnchorTag.Url));
+            WebResult[] webResults = await crawler.CrawlAsync(remainingAnchors.Select(holder => holder.AnchorTag));
 
             foreach (WebResult webResult in webResults)
             {
@@ -87,8 +88,8 @@ public class Scrapper(ILogger<Scrapper> logger, Crawler crawler)
                 if (scrapedKeywords.Count > 0)
                     _scrapeResults.Add(new ScrapeResult
                     {
-                        Uri = webResult.Uri,
-                        BaseUrl = webResult.BaseUrl,
+                        Url = webResult.Uri.ToString(),
+                        Host = webResult.BaseUrl.Host,
                         Keywords = scrapedKeywords,
                         PhoneNumbers = ScrapePhoneNumbers(webResult.Html)
                     });
@@ -112,7 +113,6 @@ public class Scrapper(ILogger<Scrapper> logger, Crawler crawler)
 
     private static HashSet<string> ScrapePhoneNumbers(string html) =>
         PhoneNumbers.Matches(html)
-            .Cast<Match>()
             .Select(match => match.Value)
             .ToHashSet();
 
@@ -148,11 +148,8 @@ public class Scrapper(ILogger<Scrapper> logger, Crawler crawler)
 
             anchorHolders.Add(new AnchorHolder
             {
-                AnchorTag = new AnchorTag
+                AnchorTag = new AnchorTag(baseAddress, CreateUri(href))
                 {
-                    Href = href,
-                    Url = CreateUri(href),
-                    Website = baseAddress,
                     InnerText = anchor.InnerText,
                     Title = anchor.GetAttributeValue("title", null)
                 }

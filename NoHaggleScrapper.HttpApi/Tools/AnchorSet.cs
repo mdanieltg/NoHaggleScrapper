@@ -1,8 +1,10 @@
 ﻿using System.Collections;
+using System.Diagnostics;
 using NoHaggleScrapper.HttpApi.Models;
 
 namespace NoHaggleScrapper.HttpApi.Tools;
 
+[DebuggerDisplay("{_anchors.Count} elements in the set")]
 public class AnchorSet : IEnumerable<AnchorHolder>
 {
     private readonly Dictionary<string, AnchorHolder> _anchors = new();

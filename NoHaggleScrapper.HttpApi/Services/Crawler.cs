@@ -2,9 +2,10 @@
 
 namespace NoHaggleScrapper.HttpApi.Services;
 
-public class Crawler(ILogger<Crawler> logger, ILogger<WebClient> webClientLogger) : ICrawler
+public class Crawler(ILogger<Crawler> logger, IServiceProvider serviceProvider) : ICrawler
 {
     private readonly ILogger<Crawler> _logger = logger;
+    private readonly IServiceProvider _serviceProvider = serviceProvider;
     private IReadOnlyDictionary<string, IWebClient>? _webClients;
 
     public async Task<WebResult[]> CrawlAsync(IEnumerable<AnchorTag> anchorTags, CancellationToken cancellationToken)
@@ -19,7 +20,7 @@ public class Crawler(ILogger<Crawler> logger, ILogger<WebClient> webClientLogger
             // Create WebClients for each "main" URL
             Dictionary<string, IWebClient> webClients = new();
             foreach (AnchorTag anchorTag in anchorTags)
-                webClients.Add(anchorTag.Host, WebClient.CreateHttpClient(anchorTag.Url, webClientLogger));
+                webClients.Add(anchorTag.Host, WebClient.CreateHttpClient(anchorTag.Url, _serviceProvider));
 
             foreach (IWebClient webClient in webClients.Values)
                 webpageTasks.Add(webClient.GetHtml(null, cancellationToken));

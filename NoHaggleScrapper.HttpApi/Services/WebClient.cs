@@ -89,7 +89,7 @@ public class WebClient : IWebClient
         return result;
     }
 
-    public static WebClient CreateHttpClient(Uri baseAddress, ILogger<WebClient> logger)
+    public static WebClient CreateHttpClient(Uri baseAddress, IServiceProvider serviceProvider)
     {
         HttpClient httpClient = new(HttpClientHandler)
         {
@@ -110,6 +110,10 @@ public class WebClient : IWebClient
                 }
             }
         };
+
+        // Get an ILogger<WebClient>
+        ILogger<WebClient> logger = serviceProvider.GetService<ILogger<WebClient>>()
+                                    ?? throw new InvalidOperationException("Couldn't find a suitable ILogger");
 
         return new WebClient(logger, httpClient);
     }

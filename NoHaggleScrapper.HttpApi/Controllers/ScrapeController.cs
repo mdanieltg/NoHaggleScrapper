@@ -31,9 +31,12 @@ public class ScrapeController : ControllerBase
 
     [HttpGet("scrape")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<IEnumerable<ScrapeResult>>> Scrape()
     {
-        CancellationToken token = _tokenProvider.CreateToken();
+        CancellationToken? token = _tokenProvider.CreateToken();
+        if (!token.HasValue) return BadRequest();
+
         IEnumerable<Uri> urls = new List<Uri>()
         {
             new("https://www.cars.com/", UriKind.Absolute),
@@ -66,7 +69,7 @@ public class ScrapeController : ControllerBase
         };
 
         IEnumerable<ScrapeResult> scrapeResults = await _scrapper.ScrapeAsync(urls, keywords, extensionsToIgnore,
-                                                                              wordsToIgnore, token);
+                                                                              wordsToIgnore, token.Value);
 
         _tokenProvider.DisposeToken();
 

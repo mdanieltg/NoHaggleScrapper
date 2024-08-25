@@ -27,10 +27,18 @@ public class CancellationTokenProvider
         return true;
     }
 
-    public CancellationToken CreateToken()
+    public CancellationToken? CreateToken()
     {
-        _logger.LogDebug("Creating new CancellationTokenSource");
+        _logger.LogDebug("New CancellationTokenSource creation requested");
+
+        if (_cancellationTokenSource is not null)
+        {
+            _logger.LogError("There is an operation in progress, please wait a few seconds or cancel it first");
+            return null;
+        }
+
         _cancellationTokenSource = new CancellationTokenSource();
+        _logger.LogDebug("New CancellationTokenSource created");
         return _cancellationTokenSource.Token;
     }
 

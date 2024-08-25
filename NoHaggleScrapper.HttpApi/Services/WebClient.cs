@@ -59,7 +59,7 @@ public class WebClient
         catch (HttpRequestException e) when (e.StatusCode is not null)
         {
             _logger.LogError("An HTTP {StatusCode} error occurred while processing the URL {Url}: {ErrorDescription}",
-                e.StatusCode, callingUri, e.Message);
+                             e.StatusCode, callingUri, e.Message);
 
             if (e.StatusCode == HttpStatusCode.Forbidden && ++_forbiddenCount >= 10)
             {
@@ -70,7 +70,7 @@ public class WebClient
         catch (HttpRequestException e)
         {
             _logger.LogError("An error occurred while processing the URL {Url} with description: {ErrorDescription}",
-                callingUri, e.Message);
+                             callingUri, e.Message);
         }
 
         return result;

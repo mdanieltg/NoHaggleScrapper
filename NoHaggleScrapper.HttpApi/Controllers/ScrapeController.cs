@@ -66,7 +66,7 @@ public class ScrapeController : ControllerBase
         };
 
         IEnumerable<ScrapeResult> scrapeResults = await _scrapper.ScrapeAsync(urls, keywords, extensionsToIgnore,
-            wordsToIgnore, token);
+                                                                              wordsToIgnore, token);
 
         _tokenProvider.DisposeToken();
 

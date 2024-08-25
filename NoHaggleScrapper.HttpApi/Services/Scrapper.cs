@@ -26,7 +26,8 @@ public class Scrapper(ILogger<Scrapper> logger, Crawler crawler)
             WebResult[] webResults = await crawler.CrawlAsync(anchors, cancellationToken);
 
             stopwatch.Interval();
-            logger.LogDebug("Finished starting crawling operation in {Milliseconds:N0} milliseconds", stopwatch.Elapsed);
+            logger.LogDebug("Finished starting crawling operation in {Milliseconds:N0} milliseconds",
+                            stopwatch.Elapsed);
             logger.LogDebug("Starting scraping operation");
 
             // Scrape anchor tags from pages
@@ -54,7 +55,8 @@ public class Scrapper(ILogger<Scrapper> logger, Crawler crawler)
             }
 
             stopwatch.Interval();
-            logger.LogDebug("Finished starting scraping operation in {Milliseconds:N0} milliseconds", stopwatch.Elapsed);
+            logger.LogDebug("Finished starting scraping operation in {Milliseconds:N0} milliseconds",
+                            stopwatch.Elapsed);
             logger.LogDebug("Starting sub-scraping ");
 
             // Massive sub-scraping operation
@@ -63,7 +65,7 @@ public class Scrapper(ILogger<Scrapper> logger, Crawler crawler)
             stopwatch.Stop();
             logger.LogDebug("Finished sub-scraping operation in {Milliseconds:N0} milliseconds", stopwatch.Elapsed);
             logger.LogDebug("Whole scraping operation took {Milliseconds:N0} milliseconds to complete",
-                stopwatch.TotalElapsed);
+                            stopwatch.TotalElapsed);
         }
         catch (OperationCanceledException)
         {
@@ -91,7 +93,7 @@ public class Scrapper(ILogger<Scrapper> logger, Crawler crawler)
                 anchorHolder.Visited = true;
 
             WebResult[] webResults = await crawler.CrawlAsync(remainingAnchors.Select(holder => holder.AnchorTag),
-                cancellationToken);
+                                                              cancellationToken);
 
             foreach (WebResult webResult in webResults)
             {
@@ -166,11 +168,10 @@ public class Scrapper(ILogger<Scrapper> logger, Crawler crawler)
 
             anchorHolders.Add(new AnchorHolder
             {
-                AnchorTag = new AnchorTag(baseAddress, url)
-                {
-                    InnerText = anchor.InnerText,
-                    Title = anchor.GetAttributeValue("title", null)
-                }
+                AnchorTag = new AnchorTag(baseAddress: baseAddress,
+                                          url: url,
+                                          innerText: anchor.InnerText,
+                                          title: anchor.GetAttributeValue("title", null))
             });
         }
 

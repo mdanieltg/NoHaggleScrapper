@@ -38,7 +38,7 @@ public class Crawler(ILogger<Crawler> logger, ILogger<WebClient> webClientLogger
                 else
                 {
                     logger.LogError("Couldn't find a WebClient for the URL {Url}, with host {Host}", anchorTag.Url,
-                        urlHost);
+                                    urlHost);
                 }
             }
         }

@@ -2,7 +2,7 @@
 
 namespace NoHaggleScrapper.HttpApi.Services;
 
-public class Crawler(ILogger<Crawler> logger, ILogger<WebClient> webClientLogger)
+public class Crawler(ILogger<Crawler> logger, ILogger<WebClient> webClientLogger) : IDisposable
 {
     private IReadOnlyDictionary<string, WebClient>? _webClients;
 
@@ -45,5 +45,12 @@ public class Crawler(ILogger<Crawler> logger, ILogger<WebClient> webClientLogger
 
         return await Task.WhenAll(webpageTasks)
             .WaitAsync(cancellationToken);
+    }
+
+    public void Dispose()
+    {
+        if (_webClients is not null)
+            foreach ((string _, WebClient value) in _webClients)
+                value.Dispose();
     }
 }

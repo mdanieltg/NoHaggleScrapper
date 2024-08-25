@@ -71,6 +71,10 @@ public class Scrapper(ILogger<Scrapper> logger, Crawler crawler)
         {
             logger.LogInformation("The operation was stopped due to a cancellation event");
         }
+        finally
+        {
+            crawler.Dispose();
+        }
 
         return _scrapeResults;
     }

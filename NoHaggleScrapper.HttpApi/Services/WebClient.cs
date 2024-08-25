@@ -5,7 +5,7 @@ using NoHaggleScrapper.HttpApi.Models;
 
 namespace NoHaggleScrapper.HttpApi.Services;
 
-public class WebClient
+public class WebClient : IDisposable
 {
     private static readonly HttpClientHandler HttpClientHandler = new()
     {
@@ -23,6 +23,7 @@ public class WebClient
     private readonly ILogger<WebClient> _logger;
     private short _forbiddenCount;
     private bool _isBlocked;
+    private bool _isHttpClientDisposed;
 
     private WebClient(ILogger<WebClient> logger, HttpClient httpClient)
     {
@@ -43,8 +44,8 @@ public class WebClient
         Uri callingUri = uri ?? BaseUrl;
         WebResult result = new() { Uri = callingUri, BaseUrl = BaseUrl };
 
-        // If we are blocked, then do nothing else
-        if (_isBlocked) return result;
+        // If the HttpClient has already been disposed or we are being blocked by the Host, do nothing else
+        if (_isHttpClientDisposed || _isBlocked) return result;
 
         try
         {
@@ -71,6 +72,10 @@ public class WebClient
         {
             _logger.LogError("An error occurred while processing the URL {Url} with description: {ErrorDescription}",
                              callingUri, e.Message);
+        }
+        catch (ObjectDisposedException)
+        {
+            // Do nothing
         }
 
         return result;
@@ -99,5 +104,11 @@ public class WebClient
         };
 
         return new WebClient(logger, httpClient);
+    }
+
+    public void Dispose()
+    {
+        _httpClient.Dispose();
+        _isHttpClientDisposed = true;
     }
 }

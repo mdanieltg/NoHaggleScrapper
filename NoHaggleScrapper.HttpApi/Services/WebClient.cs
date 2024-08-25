@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Http.Headers;
+using System.Net.Sockets;
 using System.Security.Authentication;
 using NoHaggleScrapper.HttpApi.Models;
 
@@ -49,8 +50,11 @@ public class WebClient : IDisposable
 
         try
         {
-            using HttpResponseMessage response = await _httpClient.GetAsync(uri, cancellationToken);
+            using HttpRequestMessage request = new(HttpMethod.Get, callingUri);
+            request.Headers.Add("X-Id", Guid.NewGuid().ToString());
+
             _logger.LogDebug("Processing URL {Url}...", callingUri);
+            using HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken);
 
             response.EnsureSuccessStatusCode();
 
@@ -72,6 +76,10 @@ public class WebClient : IDisposable
         {
             _logger.LogError("An error occurred while processing the URL {Url} with description: {ErrorDescription}",
                              callingUri, e.Message);
+        }
+        catch (SocketException e)
+        {
+            _logger.LogError("A SocketException has ocurred: {Message}", e.Message);
         }
         catch (ObjectDisposedException)
         {

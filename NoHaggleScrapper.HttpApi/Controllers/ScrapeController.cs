@@ -10,10 +10,10 @@ namespace NoHaggleScrapper.HttpApi.Controllers;
 public class ScrapeController : ControllerBase
 {
     private readonly ILogger<ScrapeController> _logger;
-    private readonly Scrapper _scrapper;
+    private readonly IScrapper _scrapper;
     private readonly CancellationTokenProvider _tokenProvider;
 
-    public ScrapeController(ILogger<ScrapeController> logger, Scrapper scrapper,
+    public ScrapeController(ILogger<ScrapeController> logger, IScrapper scrapper,
         CancellationTokenProvider tokenProvider)
     {
         _logger = logger;

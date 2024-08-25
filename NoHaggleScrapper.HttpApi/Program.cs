@@ -5,8 +5,8 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 
 builder.Services.AddSingleton<CancellationTokenProvider>();
-builder.Services.AddScoped<Crawler>();
-builder.Services.AddScoped<Scrapper>();
+builder.Services.AddScoped<ICrawler, Crawler>();
+builder.Services.AddScoped<IScrapper, Scrapper>();
 
 // Add services to the container.
 builder.Services.AddEndpointsApiExplorer();

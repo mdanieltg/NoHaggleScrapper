@@ -2,9 +2,10 @@
 
 namespace NoHaggleScrapper.HttpApi.Services;
 
-public class Crawler(ILogger<Crawler> logger, ILogger<WebClient> webClientLogger) : IDisposable
+public class Crawler(ILogger<Crawler> logger, ILogger<WebClient> webClientLogger) : ICrawler
 {
-    private IReadOnlyDictionary<string, WebClient>? _webClients;
+    private readonly ILogger<Crawler> _logger = logger;
+    private IReadOnlyDictionary<string, IWebClient>? _webClients;
 
     public async Task<WebResult[]> CrawlAsync(IEnumerable<AnchorTag> anchorTags, CancellationToken cancellationToken)
     {
@@ -16,11 +17,11 @@ public class Crawler(ILogger<Crawler> logger, ILogger<WebClient> webClientLogger
         if (_webClients is null)
         {
             // Create WebClients for each "main" URL
-            Dictionary<string, WebClient> webClients = new();
+            Dictionary<string, IWebClient> webClients = new();
             foreach (AnchorTag anchorTag in anchorTags)
                 webClients.Add(anchorTag.Host, WebClient.CreateHttpClient(anchorTag.Url, webClientLogger));
 
-            foreach (WebClient webClient in webClients.Values)
+            foreach (IWebClient webClient in webClients.Values)
                 webpageTasks.Add(webClient.GetHtml(null, cancellationToken));
 
             _webClients = webClients;
@@ -33,12 +34,12 @@ public class Crawler(ILogger<Crawler> logger, ILogger<WebClient> webClientLogger
 
                 string urlHost = anchorTag.Host;
 
-                if (_webClients.TryGetValue(urlHost, out WebClient? webClient))
+                if (_webClients.TryGetValue(urlHost, out IWebClient? webClient))
                     webpageTasks.Add(webClient.GetHtml(anchorTag.Url, cancellationToken));
                 else
                 {
-                    logger.LogError("Couldn't find a WebClient for the URL {Url}, with host {Host}", anchorTag.Url,
-                                    urlHost);
+                    _logger.LogError("Couldn't find a WebClient for the URL {Url}, with host {Host}", anchorTag.Url,
+                                     urlHost);
                 }
             }
         }
@@ -50,7 +51,7 @@ public class Crawler(ILogger<Crawler> logger, ILogger<WebClient> webClientLogger
     public void Dispose()
     {
         if (_webClients is not null)
-            foreach ((string _, WebClient value) in _webClients)
+            foreach ((string _, IWebClient value) in _webClients)
                 value.Dispose();
     }
 }

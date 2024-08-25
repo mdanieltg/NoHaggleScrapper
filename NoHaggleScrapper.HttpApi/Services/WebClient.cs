@@ -6,7 +6,7 @@ using NoHaggleScrapper.HttpApi.Models;
 
 namespace NoHaggleScrapper.HttpApi.Services;
 
-public class WebClient : IDisposable
+public class WebClient : IWebClient
 {
     private static readonly HttpClientHandler HttpClientHandler = new()
     {
@@ -33,7 +33,7 @@ public class WebClient : IDisposable
         BaseUrl = httpClient.BaseAddress!;
     }
 
-    public Uri BaseUrl { get; }
+    private Uri BaseUrl { get; }
 
     public async Task<WebResult> GetHtml(Uri? uri, CancellationToken cancellationToken)
     {

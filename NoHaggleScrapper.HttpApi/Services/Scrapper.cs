@@ -5,7 +5,7 @@ using NoHaggleScrapper.HttpApi.Tools;
 
 namespace NoHaggleScrapper.HttpApi.Services;
 
-public class Scrapper(ILogger<Scrapper> logger, Crawler crawler)
+public class Scrapper(ILogger<Scrapper> logger, ICrawler crawler) : IScrapper
 {
     private static readonly Regex PhoneNumbers = new(@"\(?\d{3}\)?[- \.]\d{3}[- \.]\d{4}", RegexOptions.Compiled);
     private static readonly Regex Protocols = new(@"^[\w-]+:(\/\/)?", RegexOptions.Multiline | RegexOptions.Compiled);
